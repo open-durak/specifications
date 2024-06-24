@@ -1,0 +1,462 @@
+openapi: 3.1.0
+info:
+  title: Open Durak
+  description: API specification for card game Durak (aka Fool)
+  version: 0.0.1
+servers:
+  - url: 'https'
+paths:
+  /sessions:
+    get:
+      summary: Get list of sessions
+      responses:
+        '200':
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SessionListItem'
+    post:
+      summary: Create new session
+      requestBody:
+        description: Parameters for new session
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+
+  /sessions/{sessionId}:
+    get:
+      summary: Get session info
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+    patch:
+      summary: Update session
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: New session settings
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSessionRequest'
+      responses:
+        '200':
+          description: Session updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+  /sessions/{sessionId}/join:
+    post:
+      summary: Join session
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Player info
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinSessionRequest'
+      responses:
+        '200':
+          description: Player joined
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+  /sessions/{sessionId}/games:
+    get:
+      summary: Get list of games in the session
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of games in the session
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Game'
+  /sessions/{sessionId}/games/{gameId}:
+    get:
+      summary: Get current game state.
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Game state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameState'
+  /sessions/{sessionId}/games/{gameId}/moves:
+    get:
+      summary: Get moves for the current game
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of moves
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Move'
+    post:
+      summary: Make a move in the current game
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Move details
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveRequest'
+      responses:
+        '200':
+          description: Move successfully made
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Move'
+        '400':
+          description: Invalid move
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  code:
+                    type: integer
+                  details:
+                    type: object
+  /sessions/{sessionId}/games/{gameId}/moves/{moveId}:
+    get:
+      summary: Get details of a specific move
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: moveId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Details of the specified move
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Move'
+    delete:
+      summary: Delete a specific move
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: moveId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Move successfully deleted
+    patch:
+      summary: Update a specific move
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: moveId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Updated move details
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveRequest'
+      responses:
+        '200':
+          description: Move successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Move'
+components:
+  schemas:
+    Session:
+      type: object
+      description: Session info
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [ CREATED, WAITING, PLAYING ]
+        joinedPlayers:
+          type: integer
+        settings:
+          $ref: '#/components/schemas/SessionSettings'
+    SessionListItem:
+      type: object
+      description: Session info. (Short version, used in list)
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [ CREATED, WAITING, PLAYING ]
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/Player'
+        settings:
+          $ref: '#/components/schemas/SessionSettings'
+    CreateSessionRequest:
+      type: object
+      properties:
+        settings:
+          $ref: '#/components/schemas/SessionSettings'
+    UpdateSessionRequest:
+      type: object
+      properties:
+        settings:
+          $ref: '#/components/schemas/SessionSettings'
+    JoinSessionRequest:
+      type: object
+      properties:
+        player:
+          $ref: '#/components/schemas/Player'
+    SessionSettings:
+      type: object
+      properties:
+        maxPlayers:
+          type: integer
+          minimum: 2
+          maximum: 6
+          default: 2
+        isReversible:
+          type: boolean
+          default: false
+          description: 'Option "reversible". Also known as perevodnoy/transferrable'
+        isThrowIn:
+          type: boolean
+          default: false
+          description: 'Option "throw-in". Also known as podkidnoy/otbivnoy/beat-off'
+        isShowing:
+          type: boolean
+          default: false
+          description: 'Option: "showing". Also known as pokaznoy/proyezdnoy/drive-by'
+        cardDeckType:
+          type: string
+          enum: [ STANDARD_36, STANDARD_52 ]
+          default: STANDARD_36
+          description: Type of card deck
+        allowDraws:
+          type: boolean
+          default: true
+          description: Allow draws
+        attackerSelection:
+          type: string
+          enum: [ RANDOM, WINNER, NEXT ]
+          default: RANDOM
+          description: Rule for attacker selection
+        maxTurnTime:
+          type: integer
+          description: Maximum turn time in seconds
+          default: 30
+    Player:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    Game:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [ PLAYING, FINISHED ]
+
+    GameState:
+      type: object
+      properties:
+        trumpSuit:
+          $ref: '#/components/schemas/Suit'
+        trumpCard:
+          $ref: '#/components/schemas/Card'
+        attacker:
+          $ref: '#/components/schemas/Player'
+        defender:
+          $ref: '#/components/schemas/Player'
+        tableAttackerCards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Card'
+        tableDefenderCards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Card'
+        drawPile:
+          type: array
+          items:
+            $ref: '#/components/schemas/Card'
+          description: Cards that are not yet in play. This filed maybe omitted in response depend on server implementation. By default supposed to be hidden from players.
+        discardPile:
+          type: array
+          items:
+            $ref: '#/components/schemas/Card'
+          description: Cards that are no longer in play. This filed maybe omitted in response depend on server implementation. By default supposed to be hidden from players.
+        playersState:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerState'
+    PlayerState:
+      type: object
+      properties:
+        player:
+          $ref: '#/components/schemas/Player'
+        cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Card'
+    Card:
+      type: object
+      required:
+        - suit
+        - value
+      properties:
+        suit:
+          $ref: '#/components/schemas/Suit'
+        value:
+          type: string
+          enum: [ 2, 3, 4, 5, 6, 7, 8, 9, 10, J, Q, K, A ]
+          description: The value of the card
+    Suit:
+      type: string
+      description: Suit of the card
+      enum: [ HEARTS, DIAMONDS, CLUBS, SPADES ]
+    Move:
+      type: object
+      properties:
+        player:
+          $ref: '#/components/schemas/Player'
+        action:
+          $ref: '#/components/schemas/MoveAction'
+        cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Card'
+          description: Cards involved in the move (optional depending on action)
+    MoveRequest:
+      type: object
+      properties:
+        action:
+          $ref: '#/components/schemas/MoveAction'
+        cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Card'
+          description: Cards involved in the move (optional depending on action)
+    MoveAction:
+      type: string
+      enum: [ ATTACK, DEFEND, TAKE, PASS ]
+      description: Action type for move
